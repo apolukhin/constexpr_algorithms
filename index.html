@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+		<title>A Proposal to Add Constexpr Modifiers to reverse_iterator, move_iterator, array and Range Access</title>
+		<meta content="http://schemas.microsoft.com/intellisense/ie5" name="vs_targetSchema">
+		<meta http-equiv="Content-Language" content="en-us">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+		<style type="text/css">
+			.addition { color: green; text-decoration: underline; }
+		</style>
+
+	</head>
+	<body bgcolor="#ffffff">
+		<address>Document number: P0031R0</address>
+		<address>Project: Programming Language C++, Library Evolution Working Group</address>
+		<address>&nbsp;</address>
+		<address>Antony Polukhin &lt;<a href="mailto:antoshkka@gmail.com">antoshkka@gmail.com</a>&gt;</address>
+		<address>&nbsp;</address>
+		<address>Date: 2015-11-19</address>
+		<h1>Add Constexpr Modifiers to Functions in &lt;algorithm&gt; and &lt;cstring&gt; Headers</h1>
+
+		<h2>I. Introduction and Motivation</h2>
+		<p>The Standard Library provides a great collention of containers and algorithms, many of which currently lack constexpr support.
+			Even a simple <code>constexpr</code> usage requires reimplementing a big bunch of the Standard Library. Consider the simple example:</p>
+		<p></p><blockquote><pre>#include &lt;array&gt;
+#include &lt;algorithm&gt;
+ 
+int main() {
+	// OK
+	constexpr std::array&lt;char, 6&gt; a { 'H', 'e', 'l', 'l', 'o' };
+	
+	// Failures:
+	// * std::find is not constexpr
+	// * std::array::rbegin(), std::array::rend() are not constexpr
+	// * std::array::reverse_iterator is not constexpr
+	constexpr auto it = std::find(a.rbegin(), a.rend(), 'H');
+}
+</pre></blockquote><p></p>
+		<p>This proposal concentrates on <code>constexpr</code> algorithms, deferring simple containers and iterators to a separate proposal.</p>
+		<p>A proof of concept implementation for some algorithms, is available at: 
+			<a href="https://TODO:">TODO:</a>.
+		</p>
+
+
+		<h2>II. Impact on the Standard</h2>
+		<p>This proposal is a pure library extension. It proposes changes to
+			existing headers <code>&lt;cstring&gt;</code> and <code>&lt;algorithm&gt;</code> such that the changes do not break existing code
+			and do not degrade performance. It does not require any changes in the core 
+			language in simple cases of non assembly optimized Standard Library, and it could be implemented in standard C++, except for
+			the <code>memcpy</code> and <code>memmove</code> functions.
+		</p>
+
+		<h2>III. Design Decisions</h2>
+		<h3>A. <code>&lt;cstring&gt;</code> must have <code>constexpr</code> additions</h3>
+		<p>Existing implementations of the functions in <code>&lt;algorithm&gt;</code> header usually rely on functions from <code>&lt;cstring&gt;</code>.
+			For example <code>std::copy</code> usually takes advantage of <code>std::memmove</code> for POD types. This leads us to situation, that
+			functions in <code>&lt;algorithm&gt;</code> header could not be marked as <code>constexpr</code> without <code>constexpr</code> marking functions from <code>&lt;cstring&gt;</code>.</p>
+		<h3>B. <code>std::memmove</code> and <code>std::memcpy</code> must have <code>constexpr</code> additions</h3>
+		<p><code>std::memmove</code> and <code>std::memcpy</code> accept <code>void*</code> and <code>const void*</code> parameters. This makes
+			them impossible to implement in pure C++ as <code>constexpr</code>, because constant expressions can not evaluate a conversion from
+			type <code>cv void *</code> to a pointer-to-object type according to [expr.const].</p>
+			<p>However those functions are not only popular, but also are widely used across Standard Library to gain better performance. Not making them <code>constexpr</code>
+			will force standard Library developer to have compiler intrinsics for them anyway. This is a hard step that must be done.</p>
+		<h3>C. Assumption that it is possible to implement all the proposed changes without affecting language core, especially [expr.const]</h3>
+			There are many Standard Library implementations nowadays, including some proprietary. It is impossible to investigate all of them to be 100% sure that
+			no performance degradation possible.</p>
+			<p>This proposal assumes that:
+			<ul>
+				<li>If algorithm uses compiler intrinsics, then those intrinsics could be made <code>constexpr</code> by compiler vendors.</li>
+				<li>If algorithm uses assembly optimization, then that assmbly could be turned into <code>constexpr</code> compiler intrinsic.</li>
+				<li>If algorithm uses external functions, then those functions could be made inline and marked <code>constexpr</code> or could be replaced with intrinsics.</li>
+			</ul></p>
+
+		<h2>IV. Proposed modifications for N4567</h2>
+		<p>All the additions to the Standard are marked with <span class="addition">underlined green</span>.</p>
+		<h3>A. Modifications to "21.8 Null-terminated sequence utilities" [c.strings]</h3>
+		<pre>The headers shall not define the types char16_t, char32_t, and wchar_t (2.11).
+
+<span class="addition">All the functions from &lt;cstring&gt; header must be marked with constexpr, except the strcoll, strxfrm, strerror functions.</span>
+
+The function signature strchr(const char*, int) shall be replaced by the two declarations:
+    <span class="addition">constexpr</span> const char* strchr(const char* s, int c);
+    <span class="addition">constexpr</span> char* strchr(char* s, int c);
+both of which shall have the same behavior as the original declaration.
+
+The function signature strpbrk(const char*, const char*) shall be replaced by the two declarations:
+    <span class="addition">constexpr</span> const char* strpbrk(const char* s1, const char* s2);
+    <span class="addition">constexpr</span> char* strpbrk(char* s1, const char* s2);
+both of which shall have the same behavior as the original declaration.
+
+The function signature strrchr(const char*, int) shall be replaced by the two declarations:
+    <span class="addition">constexpr</span> const char* strrchr(const char* s, int c);
+    <span class="addition">constexpr</span> char* strrchr(char* s, int c);
+both of which shall have the same behavior as the original declaration.
+
+The function signature strstr(const char*, const char*) shall be replaced by the two declarations:
+    <span class="addition">constexpr</span> const char* strstr(const char* s1, const char* s2);
+    <span class="addition">constexpr</span> char* strstr(char* s1, const char* s2);
+both of which shall have the same behavior as the original declaration.
+
+The function signature memchr(const void*, int, size_t) shall be replaced by the two declarations:
+    <span class="addition">constexpr</span> const void* memchr(const void* s, int c, size_t n);
+    <span class="addition">constexpr</span> void* memchr(void* s, int c, size_t n);
+both of which shall have the same behavior as the original declaration.
+		</pre>
+
+
+		<h3>B. Modifications to "25 Algorithms library" [algorithms]</h3>
+		<p>All the functions that are not marked with <code>constexpr</code> must be marked, except functions described in section "25.5 C library algorithms" [alg.c.library]
+		</p>
+
+		<h3>C. Modifications to "20.2 Utility components" [utility]</h3>
+		<pre>
+// 20.2.2, swap:
+template&lt;class T&gt;
+<span class="addition">constexpr</span> void swap(T&amp; a, T&amp; b) noexcept(see below );
+
+template &lt;class T, size_t N&gt;
+<span class="addition">constexpr</span> void swap(T (&amp;a)[N], T (&amp;b)[N]) noexcept(noexcept(swap(*a, *b)));
+
+// 20.2.3, exchange:
+template &lt;class T, class U=T&gt;
+<span class="addition">constexpr</span> T exchange(T&amp; obj, U&amp;&amp; new_val);
+		</pre>
+
+
+		<h3>D. Modifications to "20.2.2 swap" [utility.swap]</h3>
+		<pre>
+template&lt;class T&gt; <span class="addition">constexpr</span> void swap(T&amp; a, T&amp; b) noexcept(see below );
+
+Remark: The expression inside noexcept is equivalent to:
+    is_nothrow_move_constructible&lt;T&gt;::value &amp;&amp;
+    is_nothrow_move_assignable&lt;T&gt;::value
+
+Requires: Type T shall be MoveConstructible (Table 20) and MoveAssignable (Table 22).
+Effects: Exchanges values stored in two locations.
+
+template&lt;class T, size_t N&gt;
+<span class="addition">constexpr</span> void swap(T (&amp;a)[N], T (&amp;b)[N]) noexcept(noexcept(swap(*a, *b)));
+
+Requires: a[i] shall be swappable with (17.6.3.2) b[i] for all i in the range [0,N).
+Effects: swap_ranges(a, a + N, b)
+		</pre>
+
+
+		<h3>E. Modifications to "20.2.3 exchange" [utility.exchange]</h3>
+		<pre>
+template &lt;class T, class U=T&gt; <span class="addition">constexpr</span> T exchange(T&amp; obj, U&amp;&amp; new_val);
+
+Effects: Equivalent to:
+    T old_val = std::move(obj);
+    obj = std::forward&lt;U&gt;(new_val);
+    return old_val;
+		</pre>
+
+
+		<h3>F. Feature-testing macro</h3>
+		<p>For the purposes of SG10, we recommend the feature-testing macro name <code>__cpp_lib_constexpr_algorithms</code>.</p>
+
+
+		<h2>V. Revision History</h2>
+		<p>Revision 1:</p>
+		<ul>
+			<li>
+				Initial proposal
+			</li>
+		</ul>
+
+
+		<h2>VI. References</h2>
+		<p>[<a name="Boost15">Boost15</a>] TODO:. Available online at <a href="TODO:">
+				TODO:</a></p>
+		<p>[<a name="rhalbersma">rhalbersma</a><a>] Proof of concept for some functions.
+			Available online at </a><a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&fileviewer=file-view-default">
+				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&fileviewer=file-view-default</a>
+			and <a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp?at=default&fileviewer=file-view-default">
+				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp?at=default&fileviewer=file-view-default</a></p>
+		<p>&nbsp;</p>
+
+		<h2>VII. Acknowledgements</h2>
+		<p>Walter E. Brown provided numerous comments, corrections, and suggestions for this proposal.</p>
+
+
+</body></html>
