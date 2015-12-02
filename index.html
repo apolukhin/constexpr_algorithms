@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
-		<title>A Proposal to Add Constexpr Modifiers to reverse_iterator, move_iterator, array and Range Access</title>
+		<title>A Proposal to Add Constexpr Modifiers to Functions in &lt;algorithm&gt; and &lt;cstring&gt; Headers</title>
 		<meta content="http://schemas.microsoft.com/intellisense/ie5" name="vs_targetSchema">
 		<meta http-equiv="Content-Language" content="en-us">
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -11,7 +11,7 @@
 
 	</head>
 	<body bgcolor="#ffffff">
-		<address>Document number: P0031R0</address>
+		<address>Document number: P????R0</address>
 		<address>Project: Programming Language C++, Library Evolution Working Group</address>
 		<address>&nbsp;</address>
 		<address>Antony Polukhin &lt;<a href="mailto:antoshkka@gmail.com">antoshkka@gmail.com</a>&gt;</address>
@@ -20,7 +20,7 @@
 		<h1>Add Constexpr Modifiers to Functions in &lt;algorithm&gt; and &lt;cstring&gt; Headers</h1>
 
 		<h2>I. Introduction and Motivation</h2>
-		<p>The Standard Library provides a great collention of containers and algorithms, many of which currently lack constexpr support.
+		<p>The Standard Library provides a great collection of containers and algorithms, many of which currently lack constexpr support.
 			Even a simple <code>constexpr</code> usage requires reimplementing a big bunch of the Standard Library. Consider the simple example:</p>
 		<p></p><blockquote><pre>#include &lt;array&gt;
 #include &lt;algorithm&gt;
@@ -28,7 +28,7 @@
 int main() {
 	// OK
 	constexpr std::array&lt;char, 6&gt; a { 'H', 'e', 'l', 'l', 'o' };
-	
+
 	// Failures:
 	// * std::find is not constexpr
 	// * std::array::rbegin(), std::array::rend() are not constexpr
@@ -38,7 +38,7 @@ int main() {
 </pre></blockquote><p></p>
 		<p>This proposal concentrates on <code>constexpr</code> algorithms, deferring simple containers and iterators to a separate proposal.</p>
 		<p>A proof of concept implementation for some algorithms, is available at: 
-			<a href="https://TODO:">TODO:</a>.
+			<a href="https://todo/">TODO:</a>.
 		</p>
 
 
@@ -63,13 +63,14 @@ int main() {
 			will force standard Library developer to have compiler intrinsics for them anyway. This is a hard step that must be done.</p>
 		<h3>C. Assumption that it is possible to implement all the proposed changes without affecting language core, especially [expr.const]</h3>
 			There are many Standard Library implementations nowadays, including some proprietary. It is impossible to investigate all of them to be 100% sure that
-			no performance degradation possible.</p>
+			no performance degradation possible.<p></p>
 			<p>This proposal assumes that:
-			<ul>
+			</p><ul>
 				<li>If algorithm uses compiler intrinsics, then those intrinsics could be made <code>constexpr</code> by compiler vendors.</li>
 				<li>If algorithm uses assembly optimization, then that assmbly could be turned into <code>constexpr</code> compiler intrinsic.</li>
 				<li>If algorithm uses external functions, then those functions could be made inline and marked <code>constexpr</code> or could be replaced with intrinsics.</li>
-			</ul></p>
+				<li>Modern compilers are good in code optimization, so a decently small amount of algorithms use assembly or intrinsics.</li>
+			</ul><p></p>
 
 		<h2>IV. Proposed modifications for N4567</h2>
 		<p>All the additions to the Standard are marked with <span class="addition">underlined green</span>.</p>
@@ -110,8 +111,7 @@ both of which shall have the same behavior as the original declaration.
 		</p>
 
 		<h3>C. Modifications to "20.2 Utility components" [utility]</h3>
-		<pre>
-// 20.2.2, swap:
+		<pre>// 20.2.2, swap:
 template&lt;class T&gt;
 <span class="addition">constexpr</span> void swap(T&amp; a, T&amp; b) noexcept(see below );
 
@@ -125,8 +125,7 @@ template &lt;class T, class U=T&gt;
 
 
 		<h3>D. Modifications to "20.2.2 swap" [utility.swap]</h3>
-		<pre>
-template&lt;class T&gt; <span class="addition">constexpr</span> void swap(T&amp; a, T&amp; b) noexcept(see below );
+		<pre>template&lt;class T&gt; <span class="addition">constexpr</span> void swap(T&amp; a, T&amp; b) noexcept(see below );
 
 Remark: The expression inside noexcept is equivalent to:
     is_nothrow_move_constructible&lt;T&gt;::value &amp;&amp;
@@ -144,8 +143,7 @@ Effects: swap_ranges(a, a + N, b)
 
 
 		<h3>E. Modifications to "20.2.3 exchange" [utility.exchange]</h3>
-		<pre>
-template &lt;class T, class U=T&gt; <span class="addition">constexpr</span> T exchange(T&amp; obj, U&amp;&amp; new_val);
+		<pre>template &lt;class T, class U=T&gt; <span class="addition">constexpr</span> T exchange(T&amp; obj, U&amp;&amp; new_val);
 
 Effects: Equivalent to:
     T old_val = std::move(obj);
@@ -168,17 +166,22 @@ Effects: Equivalent to:
 
 
 		<h2>VI. References</h2>
-		<p>[<a name="Boost15">Boost15</a>] TODO:. Available online at <a href="TODO:">
+		<p>[<a name="N4567">N4567</a>] Working Draft, Standard for Programming Language C++. Available online at
+					<a href="www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4567.pdf">www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4567.pdf</a></p>
+		<p>[<a name="Boost15">Boost15</a>] TODO:. Available online at <a href="todo:">
 				TODO:</a></p>
 		<p>[<a name="rhalbersma">rhalbersma</a><a>] Proof of concept for some functions.
-			Available online at </a><a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&fileviewer=file-view-default">
-				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&fileviewer=file-view-default</a>
-			and <a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp?at=default&fileviewer=file-view-default">
-				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp?at=default&fileviewer=file-view-default</a></p>
+			Available online at </a><a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&amp;fileviewer=file-view-default">
+				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&amp;fileviewer=file-view-default</a>
+			and <a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp?at=default&amp;fileviewer=file-view-default">
+				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp?at=default&amp;fileviewer=file-view-default</a></p>
+		<p>[<a name="Discussion">Discussion</a>] A call to discuss asm in constexpr and constexpr &lt;algorithm&gt;. Available online at
+			<a href="https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/9sTJWsOpptE">https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/9sTJWsOpptE</a></p>
 		<p>&nbsp;</p>
 
 		<h2>VII. Acknowledgements</h2>
 		<p>Walter E. Brown provided numerous comments, corrections, and suggestions for this proposal.</p>
+
 
 
 </body></html>
