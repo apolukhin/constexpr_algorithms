@@ -11,12 +11,12 @@
 
 	</head>
 	<body bgcolor="#ffffff">
-		<address>Document number: P????R0</address>
+		<address>Document number: D0202R0</address>
 		<address>Project: Programming Language C++, Library Evolution Working Group</address>
 		<address>&nbsp;</address>
 		<address>Antony Polukhin &lt;<a href="mailto:antoshkka@gmail.com">antoshkka@gmail.com</a>&gt;</address>
 		<address>&nbsp;</address>
-		<address>Date: 2016-01-11</address>
+		<address>Date: 2016-01-26</address>
 		<h1>Add Constexpr Modifiers to Functions in &lt;algorithm&gt; and &lt;cstring&gt; Headers</h1>
 
 		<h2>I. Introduction and Motivation</h2>
@@ -38,7 +38,8 @@ int main() {
 </pre></blockquote><p></p>
 		<p>This proposal concentrates on <code>constexpr</code> algorithms, deferring simple containers and iterators to a separate proposal.</p>
 		<p>A proof of concept implementation for some algorithms, is available at:
-				<a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&amp;fileviewer=file-view-default">rhalbersma</a>.
+				<a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp?at=default&amp;fileviewer=file-view-default">rhalbersma</a>
+				and <a href="https://github.com/boostorg/algorithm/pull/13">Boost.Algorithm</a>.
 		</p>
 
 
@@ -649,6 +650,8 @@ Effects: Equivalent to:
 				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/algorithm.hpp</a>
 			and <a href="https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp">
 				https://bitbucket.org/rhalbersma/xstd/src/42553df6107623c71163f104b6f3cc550c245b4b/include/xstd/utility.hpp</a></p>
+		<p>[<a name="Boost.Algorithm">Boost.Algorithm</a>] Constexpr modifiers for Boost Algorithm library.
+			Available online at <a href="https://github.com/boostorg/algorithm/pull/13">https://github.com/boostorg/algorithm/pull/13</a></p>
 		<p>[<a name="Discussion">Discussion</a>] A call to discuss asm in constexpr and constexpr &lt;algorithm&gt;. Available online at
 			<a href="https://groups.google.com/a/isocpp.org/forum/#%21topic/std-proposals/9sTJWsOpptE">https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/9sTJWsOpptE</a></p>
 		<p>&nbsp;</p>
